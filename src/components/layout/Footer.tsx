@@ -1,19 +1,19 @@
 export default function Footer() {
   return (
-    <footer className="bg-background border-t mt-auto">
+    <footer className="bg-white dark:bg-slate-800 border-t border-teal-200 dark:border-slate-700 mt-auto">
       <div className="container mx-auto p-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-slate-700 dark:text-slate-300">
             © {new Date().getFullYear()} ZenithSolve. All rights reserved.
           </p>
           <div className="flex space-x-6 sm:mt-0">
             <a
               href="https://github.com/mehtajinesh/"
-              className="group text-muted-foreground transition-colors hover:text-[#4078c0]"
+              className="group text-slate-700 dark:text-slate-300 transition-colors hover:text-teal-600"
             >
               <span className="sr-only">GitHub</span>
               <svg
-                className="h-10 w-10 fill-current group-hover:fill-[#4078c0]"
+                className="h-10 w-10 fill-current group-hover:fill-teal-600"
                 viewBox="0 0 24 24"
                 aria-hidden="true"
               >
@@ -26,11 +26,11 @@ export default function Footer() {
             </a>
             <a
               href="https://www.linkedin.com/in/mehtajineshs/"
-              className="group text-muted-foreground transition-colors hover:text-[#0077B5]"
+              className="group text-slate-700 dark:text-slate-300 transition-colors hover:text-teal-600"
             >
               <span className="sr-only">LinkedIn</span>
               <svg
-                className="h-10 w-10 fill-current group-hover:fill-[#0077B5]"
+                className="h-10 w-10 fill-current group-hover:fill-teal-600"
                 viewBox="0 0 24 24"
                 aria-hidden="true"
               >
@@ -39,7 +39,7 @@ export default function Footer() {
             </a>
             <a
               href="https://jineshmehta.com"
-              className="group text-muted-foreground transition-colors hover:text-primary"
+              className="group text-slate-700 dark:text-slate-300 transition-colors hover:text-teal-600"
             >
               <span className="sr-only">Personal Website</span>
               <svg
@@ -53,7 +53,7 @@ export default function Footer() {
                   cy="50"
                   r="50"
                   strokeWidth="4"
-                  className="fill-transparent stroke-current transition-colors group-hover:stroke-[#0077B5]"
+                  className="fill-transparent stroke-current transition-colors group-hover:stroke-teal-600"
                 />
                 <text
                   x="50%"
@@ -61,7 +61,7 @@ export default function Footer() {
                   fontSize="40"
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  className="fill-current transition-colors group-hover:fill-[#0077B5]"
+                  className="fill-current transition-colors group-hover:fill-teal-600"
                 >
                   JS
                 </text>

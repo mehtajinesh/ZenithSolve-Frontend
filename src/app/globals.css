@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1f2937;
+  
+  /* Theme colors - New teal-based palette */
+  --primary-50: #f0fdfa;
+  --primary-100: #ccfbf1;
+  --primary-200: #99f6e4;
+  --primary-300: #5eead4;
+  --primary-400: #2dd4bf;
+  --primary-500: #14b8a6;
+  --primary-600: #0d9488;
+  --primary-700: #0f766e;
+  --primary-800: #115e59;
+  --primary-900: #134e4a;
+  
+  /* Accent/Secondary colors - Coral palette */
+  --secondary-500: #f43f5e;
+  --secondary-600: #e11d48;
+  
+  /* Light theme colors - Warmer grays */
+  --light-100: #fafaf9;
+  --light-200: #f5f5f4;
+  --light-300: #e7e5e4;
+  
+  /* Dark theme colors - Deep slate */
+  --dark-100: #1e293b;
+  --dark-200: #0f172a;
+  --dark-300: #020617;
+  --dark-400: #000000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--dark-300);
+    --foreground: var(--light-100);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+  min-height: 100vh;
+}
+
+/* Modern scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.2);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.05);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(241, 245, 249, 0.2);
+}
+
+/* Animation utilities with new colors */
+.bg-gradient-animated {
+  background: linear-gradient(-45deg, var(--primary-600), var(--primary-500), var(--secondary-500), var(--primary-700));
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Glass morphism effect with new colors */
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass {
+  background: rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Glow effects with new colors */
+.glow {
+  box-shadow: 0 0 15px rgba(20, 184, 166, 0.5);
+}
+
+.glow-accent {
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.5);
+}
