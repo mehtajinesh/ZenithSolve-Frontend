@@ -18,9 +18,8 @@ export type Problem = {
   difficulty: "Easy" | "Medium" | "Hard";
   categories: string[];
   realWorldApplications: RealWorldApplication[];
-  likes: number;
-  timeComplexity: string;
-  spaceComplexity: string;
+  bestTimeComplexity?: string;
+  bestSpaceComplexity?: string;
 };
 
 type ProblemCardProps = {
@@ -113,19 +112,25 @@ export default function ProblemCard({ problem }: ProblemCardProps) {
           {problem.description}
         </p>
         
-        {/* Complexity badges */}
-        <div className="flex flex-wrap gap-3 mb-4 text-xs">
-          <div className="py-1 px-2 rounded bg-white dark:bg-slate-800 border border-teal-200 dark:border-slate-700">
-            <span className="font-semibold text-slate-900 dark:text-slate-200">Time:</span> 
-            <span className="text-slate-700 dark:text-slate-300">{problem.timeComplexity}</span>
+        {/* Best Complexity badges */}
+        {(problem.bestTimeComplexity || problem.bestSpaceComplexity) && (
+          <div className="flex flex-wrap gap-3 mb-4 text-xs">
+            {problem.bestTimeComplexity && (
+              <div className="py-1 px-2 rounded bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800">
+                <span className="font-semibold text-indigo-700 dark:text-indigo-300">Best Time:</span> 
+                <span className="text-indigo-600 dark:text-indigo-400 ml-1">{problem.bestTimeComplexity}</span>
+              </div>
+            )}
+            {problem.bestSpaceComplexity && (
+              <div className="py-1 px-2 rounded bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800">
+                <span className="font-semibold text-purple-700 dark:text-purple-300">Best Space:</span> 
+                <span className="text-purple-600 dark:text-purple-400 ml-1">{problem.bestSpaceComplexity}</span>
+              </div>
+            )}
           </div>
-          <div className="py-1 px-2 rounded bg-white dark:bg-slate-800 border border-teal-200 dark:border-slate-700">
-            <span className="font-semibold text-slate-900 dark:text-slate-200">Space:</span> 
-            <span className="text-slate-700 dark:text-slate-300">{problem.spaceComplexity}</span>
-          </div>
-        </div>
+        )}
         
-        {/* Real-world applications preview */}
+        {/* Real-world applications button */}
         <div className="mb-5">
           <button 
             className="text-sm text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 focus:outline-none flex items-center transition-colors"
@@ -158,12 +163,16 @@ export default function ProblemCard({ problem }: ProblemCardProps) {
                   className="p-3 rounded-lg bg-white dark:bg-slate-800 border border-teal-200 dark:border-slate-700"
                 >
                   <div className="font-medium mb-1 text-teal-700 dark:text-teal-400">
-                    {app.industry}
+                    {typeof app === 'string' ? app : app.industry}
                   </div>
-                  <p className="mb-1 text-slate-700 dark:text-slate-300">{app.description}</p>
-                  <div className="text-xs text-slate-600 dark:text-slate-400">
-                    Impact: {app.impact}
-                  </div>
+                  {typeof app !== 'string' && (
+                    <>
+                      <p className="mb-1 text-slate-700 dark:text-slate-300">{app.description}</p>
+                      <div className="text-xs text-slate-600 dark:text-slate-400">
+                        Impact: {app.impact}
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </motion.div>

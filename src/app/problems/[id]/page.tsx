@@ -224,23 +224,36 @@ export default function ProblemDetail() {
                 <div>
                   <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Solution Approach</h2>
                   <p className="text-slate-700 dark:text-slate-300 mb-4">
-                    {problem.id === 'two-sum' ? (
-                      'We can use a hash map to efficiently find complements. By storing each number as we iterate through the array, we can check if the complement (target - current number) exists in our hash map.'
-                    ) : (
-                      problem.solutionApproach || 'A detailed explanation of the solution approach would go here.'
-                    )}
+                    {problem.solutionApproach || 'A detailed explanation of the solution approach would go here.'}
                   </p>
                 </div>
 
                 {/* Solutions */}
-                <div className="space-y-6">
-                  {problem.pythonSolution && (
-                    <div>
-                      <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Python Implementation</h2>
+                <div className="space-y-8">
+                  {problem.pythonSolutions?.map((solution, index) => (
+                    <div key={index}>
+                      <div className="flex items-center gap-4 mb-3">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                          {solution.name}
+                        </h2>
+                        <div className="flex gap-2 text-sm">
+                          <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300">
+                            Time: {solution.timeComplexity}
+                          </span>
+                          <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300">
+                            Space: {solution.spaceComplexity}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-slate-700 dark:text-slate-300 mb-4">
+                        {solution.description}
+                      </p>
+
                       <div className="relative">
                         <pre className="language-python bg-slate-50 dark:bg-slate-900 p-4 rounded-lg overflow-x-auto border border-teal-200 dark:border-slate-700">
                           <code className="text-slate-900 dark:text-slate-200 font-mono">
-                            {problem.pythonSolution}
+                            {solution.code}
                           </code>
                         </pre>
                         <button 
@@ -253,8 +266,9 @@ export default function ProblemDetail() {
                         </button>
                       </div>
                     </div>
-                  )}
+                  ))}
 
+                  {/* SQL Solution (unchanged) */}
                   {problem.sqlSolution && (
                     <div>
                       <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">SQL Solution</h2>

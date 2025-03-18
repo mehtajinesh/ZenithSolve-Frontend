@@ -5,7 +5,13 @@ export interface Problem {
   categories: string[];
   description: string;
   solutionApproach?: string;
-  pythonSolution?: string;
+  pythonSolutions?: Array<{
+    name: string;
+    description: string;
+    code: string;
+    timeComplexity: string;
+    spaceComplexity: string;
+  }>;
   sqlSolution?: string;
   schemaInfo?: string;
   realWorldApplications?: (string | { industry: string; description: string; impact: string; })[];
@@ -16,6 +22,8 @@ export interface Problem {
   }>;
   timeComplexity?: string;
   spaceComplexity?: string;
+  bestTimeComplexity?: string;
+  bestSpaceComplexity?: string;
 }
 
 export const mockProblems: Problem[] = [
@@ -25,7 +33,60 @@ export const mockProblems: Problem[] = [
     difficulty: 'Easy',
     categories: ['Array', 'Hash Table'],
     description: 'Given an array of integers nums and an integer target, return indices of the two numbers in nums such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice.',
-    solutionApproach: 'We use a hash map to store the complement of each number we\'ve seen. As we iterate through the array, we check if the current number\'s complement exists in our hash map.',
+    solutionApproach: 'We can solve this problem using different approaches, each with its own trade-offs between time and space complexity.',
+    bestTimeComplexity: 'O(n)',
+    bestSpaceComplexity: 'O(n)',
+    pythonSolutions: [
+      {
+        name: 'Hash Table Approach',
+        description: 'We use a hash map to store the complement of each number we\'ve seen. As we iterate through the array, we check if the current number\'s complement exists in our hash map.',
+        code: `def twoSum(self, nums: List[int], target: int) -> List[int]:
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []  # No solution found`,
+        timeComplexity: 'O(n)',
+        spaceComplexity: 'O(n)'
+      },
+      {
+        name: 'Two-Pointer Approach',
+        description: 'First sort the array and use two pointers from both ends. Move pointers based on if current sum is greater or lesser than target. Note: This approach needs to track original indices.',
+        code: `def twoSum(self, nums: List[int], target: int) -> List[int]:
+    # Create array of tuples with (number, index)
+    nums_with_index = [(num, i) for i, num in enumerate(nums)]
+    # Sort by number
+    nums_with_index.sort(key=lambda x: x[0])
+    left, right = 0, len(nums) - 1
+    
+    while left < right:
+        current_sum = nums_with_index[left][0] + nums_with_index[right][0]
+        if current_sum == target:
+            return [nums_with_index[left][1], nums_with_index[right][1]]
+        elif current_sum < target:
+            left += 1
+        else:
+            right -= 1
+    return []  # No solution found`,
+        timeComplexity: 'O(n log n)',
+        spaceComplexity: 'O(n)'
+      },
+      {
+        name: 'Brute Force Approach',
+        description: 'Check every possible pair of numbers in the array.',
+        code: `def twoSum(self, nums: List[int], target: int) -> List[int]:
+    n = len(nums)
+    for i in range(n):
+        for j in range(i + 1, n):
+            if nums[i] + nums[j] == target:
+                return [i, j]
+    return []  # No solution found`,
+        timeComplexity: 'O(n²)',
+        spaceComplexity: 'O(1)'
+      }
+    ],
     realWorldApplications: [
       {
         industry: "E-commerce",
@@ -38,16 +99,6 @@ export const mockProblems: Problem[] = [
         impact: "Reduces fraud detection time by 35%"
       }
     ],
-    timeComplexity: "O(n)",
-    spaceComplexity: "O(n)",
-    pythonSolution: `def twoSum(self, nums: List[int], target: int) -> List[int]:
-    seen = {}
-    for i, num in enumerate(nums):
-        complement = target - num
-        if complement in seen:
-            return [seen[complement], i]
-        seen[num] = i
-    return []  # No solution found`,
     examples: [
       {
         input: 'nums = [2,7,11,15], target = 9',
@@ -63,6 +114,8 @@ export const mockProblems: Problem[] = [
     categories: ['Database', 'SQL'],
     description: 'Write a SQL query to find the employees who earn more than their managers. Return the names of these employees.',
     solutionApproach: 'We can solve this using a self-join on the Employee table, joining each employee with their manager using the managerId field.',
+    bestTimeComplexity: "O(n)",
+    bestSpaceComplexity: "O(1)",
     schemaInfo: `CREATE TABLE Employee (
     id INT PRIMARY KEY,
     name VARCHAR(255),
@@ -90,8 +143,6 @@ WHERE e1.salary > e2.salary;`,
         impact: "Facilitates equitable salary distribution and reduces bias in compensation practices."
       }
     ],
-    timeComplexity: "NA",
-    spaceComplexity: "NA",
     examples: [
       {
         input: `
