@@ -11,9 +11,9 @@ export default function Home() {
   return (
     <>
     <main>
-    <div className="w-full min-h-screen flex items-center justify-center">
+    <div className="w-full bg-gradient-animated min-h-screen flex items-center justify-center">
       {/* Hero section with animated gradient background */}
-      <div className="w-full bg-gradient-animated py-16 mb-12 relative overflow-hidden">
+      <div className="w-full  py-16 mb-12 relative overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <h2 className="text-5xl font-extrabold mb-4 text-white animate-float">

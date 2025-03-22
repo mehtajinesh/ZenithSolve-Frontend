@@ -3,24 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-
-// Problem types
-type RealWorldApplication = {
-  industry: string;
-  description: string;
-  impact: string;
-};
-
-export type Problem = {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  categories: string[];
-  realWorldApplications: RealWorldApplication[];
-  bestTimeComplexity?: string;
-  bestSpaceComplexity?: string;
-};
+import type { Problem } from "@/types/problem";
 
 type ProblemCardProps = {
   problem: Problem;
@@ -113,18 +96,18 @@ export default function ProblemCard({ problem }: ProblemCardProps) {
         </p>
         
         {/* Best Complexity badges */}
-        {(problem.bestTimeComplexity || problem.bestSpaceComplexity) && (
+        {(problem.best_time_complexity || problem.best_space_complexity) && (
           <div className="flex flex-wrap gap-3 mb-4 text-xs">
-            {problem.bestTimeComplexity && (
+            {problem.best_time_complexity && (
               <div className="py-1 px-2 rounded bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800">
                 <span className="font-semibold text-indigo-700 dark:text-indigo-300">Best Time:</span> 
-                <span className="text-indigo-600 dark:text-indigo-400 ml-1">{problem.bestTimeComplexity}</span>
+                <span className="text-indigo-600 dark:text-indigo-400 ml-1">{problem.best_time_complexity}</span>
               </div>
             )}
-            {problem.bestSpaceComplexity && (
+            {problem.best_space_complexity && (
               <div className="py-1 px-2 rounded bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800">
                 <span className="font-semibold text-purple-700 dark:text-purple-300">Best Space:</span> 
-                <span className="text-purple-600 dark:text-purple-400 ml-1">{problem.bestSpaceComplexity}</span>
+                <span className="text-purple-600 dark:text-purple-400 ml-1">{problem.best_space_complexity}</span>
               </div>
             )}
           </div>
@@ -157,7 +140,7 @@ export default function ProblemCard({ problem }: ProblemCardProps) {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {problem.realWorldApplications.map((app, index) => (
+              {problem.real_world_applications.map((app, index) => (
                 <div 
                   key={index} 
                   className="p-3 rounded-lg bg-white dark:bg-slate-800 border border-teal-200 dark:border-slate-700"
@@ -182,7 +165,7 @@ export default function ProblemCard({ problem }: ProblemCardProps) {
         {/* Action buttons */}
         <div className="flex mt-4">
           <Link 
-            href={`/problems/${problem.id}`}
+            href={`/problems/${problem.slug_id}`}
             className="w-full flex justify-center items-center py-2 px-4 text-sm font-medium rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition-colors dark:bg-teal-700 dark:hover:bg-teal-800"
           >
             View Problem
