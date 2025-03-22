@@ -13,7 +13,7 @@ export default function Home() {
     <main>
     <div className="w-full bg-gradient-animated min-h-screen flex items-center justify-center">
       {/* Hero section with animated gradient background */}
-      <div className="w-full  py-16 mb-12 relative overflow-hidden">
+      <div className="w-full relative">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <h2 className="text-5xl font-extrabold mb-4 text-white animate-float">
@@ -28,6 +28,12 @@ export default function Home() {
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <a 
+                href="#about" 
+                className="px-8 py-3 bg-teal-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow glow font-medium hover:bg-teal-800"
+              >
+                Learn More
+              </a>
+              <a 
                 href="#problems" 
                 className="px-8 py-3 bg-white text-teal-700 rounded-lg shadow-lg hover:shadow-xl transition-shadow glow font-medium hover:text-teal-800"
               >
@@ -38,9 +44,7 @@ export default function Home() {
         </div>
       </div>
     </div>
-      <div className="py-12">
-        {/* Introduction section */}
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12">
+        <div id="about" className="w-full min-h-screen mx-auto px-4 sm:px-6 lg:px-8 text-center items-center justify-center flex flex-col">
           <h2 className="text-3xl font-bold mb-4">Why Choose ZenithSolve?</h2>
           <p className="text-lg max-w-2xl mx-auto text-slate-700">
             At ZenithSolve, we provide a unique platform that combines algorithm
@@ -51,6 +55,7 @@ export default function Home() {
             and prepare for technical interviews with confidence.
           </p>
         </div>
+      <div className="w-full min-h-screen flex items-center justify-center">
         {/* Problems section */}
         <div id="problems" className="container mx-auto px-4 sm:px-6 lg:px-8">
           <ProblemList />

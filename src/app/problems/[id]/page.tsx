@@ -72,7 +72,7 @@ export default function ProblemDetail() {
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Problem Not Found</h1>
             <p className="mb-8 text-slate-700 dark:text-slate-300">
-              The problem you're looking for doesn't exist or has been removed.
+              The problem you`&apos;`re looking for doesn`&apos;`t exist or has been removed.
             </p>
             <Link
               href="/"
@@ -357,7 +357,7 @@ export default function ProblemDetail() {
           {/* Navigation button */}
           <motion.div variants={itemVariants} className="flex justify-between">
             <Link 
-              href="/" 
+              href="/#problems" 
               className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors text-slate-700 dark:text-slate-300 flex items-center border border-teal-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-600"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

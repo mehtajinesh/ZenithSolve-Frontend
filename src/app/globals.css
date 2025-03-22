@@ -30,9 +30,8 @@
   --dark-200: #0f172a;
   --dark-300: #020617;
   --dark-400: #000000;
-}
-
-@theme inline {
+  
+  /* Theme variables */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);

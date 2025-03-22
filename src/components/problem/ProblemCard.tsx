@@ -140,7 +140,7 @@ export default function ProblemCard({ problem }: ProblemCardProps) {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {problem.real_world_applications.map((app, index) => (
+              {(problem.real_world_applications || []).map((app, index) => (
                 <div 
                   key={index} 
                   className="p-3 rounded-lg bg-white dark:bg-slate-800 border border-teal-200 dark:border-slate-700"

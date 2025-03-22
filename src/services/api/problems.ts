@@ -1,14 +1,14 @@
 import { apiClient } from './config';
 import { Problem } from '@/types/problem';
 
+
 export const problemsService = {
   getProblems: async (): Promise<Problem[]> => {
     try {
       const { data } = await apiClient.get<Problem[]>('/problems/');
       return data;
-    } catch (error) {
-      console.error('Error fetching problems:', error);
-      return [];
+    } catch (error:any) {
+      throw new Error('Failed to get problems: ' + error.response.data.detail.error);
     }
   },
 
@@ -16,9 +16,8 @@ export const problemsService = {
     try {
       const { data } = await apiClient.get<Problem>(`/problems/${id}`);
       return data;
-    } catch (error) {
-      console.error(`Error fetching problem ${id}:`, error);
-      return null;
+    } catch (error:any) {
+      throw new Error('Failed to get problem: ' + error.response.data.detail.error);
     }
   },
 
@@ -30,11 +29,22 @@ export const problemsService = {
     space_complexity: string;
   }) => {
     try {
-      const { data } = await apiClient.post(`/problems/${problemId}/solutions`, JSON.stringify(solution));
+      const { data } = await apiClient.post(
+        `/problems/${problemId}/solutions`, 
+        JSON.stringify(solution)
+      );
       return data;
-    } catch (error) {
-      console.error('Error adding solution:', error);
-      throw error;
+    } catch (error:any) {
+      throw new Error('Failed to add solution: ' + error.response.data.detail.error);
+    }
+  },
+
+  createProblem: async (problem: Problem): Promise<Problem> => {
+    try {
+      const { data } = await apiClient.post('/problems', problem);
+      return data;
+    } catch (error:any) {
+      throw new Error('Failed to create problem: ' + error.response.data.detail.error);
     }
   }
 };

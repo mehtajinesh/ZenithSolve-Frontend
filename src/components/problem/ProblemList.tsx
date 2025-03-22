@@ -7,7 +7,6 @@ import { Problem } from "@/types/problem";
 import ProblemCard from "./ProblemCard";
 import { problemsService } from "@/services/api/problems";
 import { categoriesService } from "@/services/api/categories";
-import toast from "react-hot-toast";
 import CreateCategoryModal from "./CreateCategoryModal";
 
 type Difficulty = "Easy" | "Medium" | "Hard" | "All";

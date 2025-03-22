@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { apiClient } from "@/services/api/config";
 import { useRouter } from "next/navigation";
 import type { Problem } from "@/types/problem";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { categoriesService } from "@/services/api/categories";
+import { problemsService } from "@/services/api/problems";
 
 // Constants for form options
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
@@ -74,8 +74,8 @@ export default function NewProblemPage() {
         throw new Error("Input and output are required for all examples");
       }
 
-      // Submit the form
-      await apiClient.post("/problems", formData);
+      // Call the problems service instead of direct API call
+      await problemsService.createProblem(formData);
       
       // Show success message
       toast.success("Problem created successfully!", { id: toastId });
@@ -85,11 +85,8 @@ export default function NewProblemPage() {
         router.push("/problems");
       }, 1000);
     } catch (err) {
-      // Show error message
-      const errorMessage = err instanceof Error 
-        ? err.message 
-        : "Failed to create problem. Please try again.";
-      
+      // The error message is already formatted by our axios interceptor
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       toast.error(errorMessage, { id: toastId });
       setLoading(false);
     }

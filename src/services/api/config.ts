@@ -7,13 +7,17 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Adding timeout to prevent hanging requests
+  timeout: 10000,
 });
 
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
+// Request interceptor
+apiClient.interceptors.request.use(
+  (config) => {
+    // You can add auth headers or other request modifications here
+    return config;
+  },
   (error) => {
-    console.error('API Error:', error);
     return Promise.reject(error);
   }
 );
