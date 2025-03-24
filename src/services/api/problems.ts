@@ -8,7 +8,8 @@ export const problemsService = {
       const { data } = await apiClient.get<Problem[]>('/problems/');
       return data;
     } catch (error:any) {
-      throw new Error('Failed to get problems: ' + error.response.data.detail.error);
+      console.error('Error fetching problems:', error);
+      throw new Error('Failed to get problems: ' + error);
     }
   },
 
@@ -17,7 +18,8 @@ export const problemsService = {
       const { data } = await apiClient.get<Problem>(`/problems/${id}`);
       return data;
     } catch (error:any) {
-      throw new Error('Failed to get problem: ' + error.response.data.detail.error);
+      console.error('Error fetching problems:', error);
+      throw new Error('Failed to get problems: ' + error);
     }
   },
 
