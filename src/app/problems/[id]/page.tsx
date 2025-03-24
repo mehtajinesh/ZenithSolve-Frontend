@@ -10,7 +10,7 @@ import type { Problem } from "@/types/problem";
 
 export default function ProblemDetail() {
   const params = useParams();
-  const problemId = params.id as string;
+  const problemId = params?.id as string || '';
   
   // State for problem data and loading
   const [problem, setProblem] = useState<Problem | null>(null);

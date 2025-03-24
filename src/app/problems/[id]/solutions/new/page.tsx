@@ -8,7 +8,7 @@ import { problemsService } from '@/services/api/problems';
 export default function NewSolutionPage() {
   const router = useRouter();
   const params = useParams();
-  const problemId = params.id as string;
+  const problemId = params?.id as string || '';
 
   const [formData, setFormData] = useState({
     name: '',
