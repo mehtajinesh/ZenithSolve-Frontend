@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  eslint: {
-    dirs: ['src'], // Only run ESLint on the 'src' directory during production builds
-  },
+  output:'standalone',
 };
-
-module.exports = nextConfig;
+/* module.exports = nextConfig*/
+export default nextConfig;
