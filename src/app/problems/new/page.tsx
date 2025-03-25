@@ -82,7 +82,7 @@ export default function NewProblemPage() {
       
       // Redirect after a short delay to ensure the user sees the success message
       setTimeout(() => {
-        router.push("/problems");
+        router.push("/#problems");
       }, 1000);
     } catch (err) {
       // The error message is already formatted by our axios interceptor
