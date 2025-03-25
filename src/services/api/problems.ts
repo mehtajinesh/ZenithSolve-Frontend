@@ -43,7 +43,7 @@ export const problemsService = {
 
   createProblem: async (problem: Problem): Promise<Problem> => {
     try {
-      const { data } = await apiClient.post('/problems', problem);
+      const { data } = await apiClient.post('/problems/', problem);
       return data;
     } catch (error:any) {
       throw new Error('Failed to create problem: ' + error.response.data.detail.error);
