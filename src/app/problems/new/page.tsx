@@ -58,6 +58,20 @@ export default function NewProblemPage() {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    const slugify = (text: string) => {
+      return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric characters with hyphens
+        .replace(/(^-|-$)/g, ''); // Remove leading or trailing hyphens
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      slug_id: slugify(formData.title),
+    }));
+  }, [formData.title]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
