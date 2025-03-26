@@ -1,15 +1,61 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import Footer from "@/components/layout/Footer";
 import { problemsService } from "@/services/api/problems";
 import type { Problem } from "@/types/problem";
 
+// Toast notification styles for consistent UX
+const toastStyles = {
+  success: {
+    style: {
+      background: '#10B981',
+      color: 'white',
+      padding: '16px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      borderRadius: '8px',
+      fontWeight: '500',
+    },
+    iconTheme: {
+      primary: 'white',
+      secondary: '#10B981',
+    },
+    duration: 3000,
+  },
+  error: {
+    style: {
+      background: '#EF4444',
+      color: 'white',
+      padding: '16px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      borderRadius: '8px',
+      fontWeight: '500',
+    },
+    iconTheme: {
+      primary: 'white',
+      secondary: '#EF4444',
+    },
+    duration: 4000,
+  },
+  loading: {
+    style: {
+      background: '#3B82F6',
+      color: 'white',
+      padding: '16px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      borderRadius: '8px',
+      fontWeight: '500',
+    },
+  }
+};
+
 export default function ProblemDetail() {
   const params = useParams();
+  const router = useRouter();
   const problemId = params?.id as string || '';
   
   // State for problem data and loading
@@ -18,6 +64,33 @@ export default function ProblemDetail() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'description' | 'solution'>('description');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  
+  // State for edit problem modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Partial<Problem>>({
+    slug_id: "",
+    title: "",
+    difficulty: "Easy",
+    categories: [],
+    description: "",
+    constraints: [],
+    examples: []
+  });
+  
+  // State for solution management
+  const [isEditSolutionModalOpen, setIsEditSolutionModalOpen] = useState(false);
+  const [isDeleteSolutionModalOpen, setIsDeleteSolutionModalOpen] = useState(false);
+  const [selectedSolutionIndex, setSelectedSolutionIndex] = useState<number | null>(null);
+  const [solutionFormData, setSolutionFormData] = useState({
+    name: "",
+    description: "",
+    code: "",
+    time_complexity: "",
+    space_complexity: ""
+  });
+  const [isDeletingSolution, setIsDeletingSolution] = useState(false);
 
   // Fetch problem data
   useEffect(() => {
@@ -43,6 +116,245 @@ export default function ProblemDetail() {
       setTimeout(() => setCopiedIndex(null), 2000); // Reset after 2 seconds
     } catch (err) {
       console.error('Failed to copy code:', err);
+    }
+  };
+
+  // Function to update the form data
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Function to handle category changes
+  const handleCategoryChange = (categories: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      categories
+    }));
+  };
+
+  // Function to handle constraint changes
+  const handleConstraintChange = (index: number, value: string) => {
+    const newConstraints = [...(formData.constraints || [])];
+    newConstraints[index] = value;
+    setFormData(prev => ({
+      ...prev,
+      constraints: newConstraints
+    }));
+  };
+
+  // Function to add a constraint
+  const addConstraint = () => {
+    setFormData(prev => ({
+      ...prev,
+      constraints: [...(prev.constraints || []), ""]
+    }));
+  };
+
+  // Function to remove a constraint
+  const removeConstraint = (index: number) => {
+    const newConstraints = [...(formData.constraints || [])];
+    newConstraints.splice(index, 1);
+    setFormData(prev => ({
+      ...prev,
+      constraints: newConstraints
+    }));
+  };
+
+  // Function to handle example changes
+  const handleExampleChange = (index: number, field: 'input' | 'output' | 'explanation', value: string) => {
+    const newExamples = [...(formData.examples || [])];
+    newExamples[index] = {
+      ...newExamples[index],
+      [field]: value
+    };
+    setFormData(prev => ({
+      ...prev,
+      examples: newExamples
+    }));
+  };
+
+  // Function to add an example
+  const addExample = () => {
+    setFormData(prev => ({
+      ...prev,
+      examples: [...(prev.examples || []), { input: "", output: "", explanation: "" }]
+    }));
+  };
+
+  // Function to remove an example
+  const removeExample = (index: number) => {
+    const newExamples = [...(formData.examples || [])];
+    newExamples.splice(index, 1);
+    setFormData(prev => ({
+      ...prev,
+      examples: newExamples
+    }));
+  };
+
+  // Function to handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (!formData.title || !formData.slug_id || !formData.description || 
+        !formData.difficulty || formData.categories?.length === 0) {
+      setFormError("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError(null);
+    
+    // Show loading toast
+    const toastId = toast.loading("Updating problem...", toastStyles.loading);
+
+    try {
+      // Call the API to update the problem
+      await problemsService.updateProblem(problemId, formData);
+      
+      // Update the problem in the state
+      setProblem({
+        ...problem!,
+        ...formData
+      } as Problem);
+      
+      // Close the modal
+      setIsEditModalOpen(false);
+      
+      // Show success toast
+      toast.success("Problem updated successfully!", { id: toastId, ...toastStyles.success });
+      
+      // Check if slug_id has changed and redirect if necessary
+      if (formData.slug_id !== problem!.slug_id) {
+        // Redirect to the new problem URL using the updated slug_id
+        router.push(`/problems/${formData.slug_id}`);
+      } else {
+        // If slug_id hasn't changed, just refresh the current page
+        router.refresh();
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || "Failed to update problem";
+      setFormError(errorMessage);
+      
+      // Show error toast
+      toast.error(errorMessage, { id: toastId, ...toastStyles.error });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Function to handle solution form changes
+  const handleSolutionFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setSolutionFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Function to handle solution update
+  const handleUpdateSolution = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (!solutionFormData.name || !solutionFormData.description || !solutionFormData.code ||
+        !solutionFormData.time_complexity || !solutionFormData.space_complexity) {
+      setFormError("Please fill in all solution fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError(null);
+    
+    // Show loading toast
+    const toastId = toast.loading("Updating solution...", toastStyles.loading);
+
+    try {
+      if (selectedSolutionIndex === null || !problem?.solutions) {
+        throw new Error("Solution not found");
+      }
+
+      const solutionId = problem.solutions[selectedSolutionIndex].name; // Assuming name is used as ID
+      
+      // Call the API to update the solution
+      await problemsService.updateSolution(problemId, solutionId, solutionFormData);
+      
+      // Update the solution in the local state
+      const updatedSolutions = [...problem.solutions];
+      updatedSolutions[selectedSolutionIndex] = {
+        ...updatedSolutions[selectedSolutionIndex],
+        ...solutionFormData
+      };
+      
+      setProblem({
+        ...problem,
+        solutions: updatedSolutions
+      });
+      
+      // Close the modal
+      setIsEditSolutionModalOpen(false);
+      
+      // Show success toast
+      toast.success("Solution updated successfully!", { id: toastId, ...toastStyles.success });
+      
+      // Refresh the page to ensure data consistency
+      router.refresh();
+    } catch (error: any) {
+      const errorMessage = error.message || "Failed to update solution";
+      setFormError(errorMessage);
+      
+      // Show error toast
+      toast.error(errorMessage, { id: toastId, ...toastStyles.error });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Function to handle solution deletion
+  const handleDeleteSolution = async () => {
+    if (selectedSolutionIndex === null || !problem?.solutions) {
+      return;
+    }
+
+    setIsDeletingSolution(true);
+    
+    // Show loading toast
+    const toastId = toast.loading("Deleting solution...", toastStyles.loading);
+
+    try {
+      const solutionId = problem.solutions[selectedSolutionIndex].name; // Assuming name is used as ID
+      
+      // Call the API to delete the solution
+      await problemsService.deleteSolution(problemId, solutionId);
+      
+      // Update the solutions in the local state
+      const updatedSolutions = [...problem.solutions];
+      updatedSolutions.splice(selectedSolutionIndex, 1);
+      
+      setProblem({
+        ...problem,
+        solutions: updatedSolutions
+      });
+      
+      // Close the modal
+      setIsDeleteSolutionModalOpen(false);
+      
+      // Show success toast
+      toast.success("Solution deleted successfully!", { id: toastId, ...toastStyles.success });
+      
+      // Refresh the page to ensure data consistency
+      router.refresh();
+    } catch (error: any) {
+      const errorMessage = error.message || "Failed to delete solution";
+      
+      // Show error toast
+      toast.error(errorMessage, { id: toastId, ...toastStyles.error });
+    } finally {
+      setIsDeletingSolution(false);
     }
   };
 
@@ -153,15 +465,38 @@ export default function ProblemDetail() {
                   </div>
                 </li>
               </ol>
-              <Link
-                href={`/problems/${problemId}/solutions/new`}
-                className="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                Add Solution
-              </Link>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    // Initialize form data with current problem values
+                    setFormData({
+                      slug_id: problem.slug_id,
+                      title: problem.title,
+                      difficulty: problem.difficulty,
+                      categories: [...problem.categories],
+                      description: problem.description,
+                      constraints: [...problem.constraints],
+                      examples: JSON.parse(JSON.stringify(problem.examples))
+                    });
+                    setIsEditModalOpen(true);
+                  }}
+                  className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                  </svg>
+                  Edit Problem
+                </button>
+                <Link
+                  href={`/problems/${problemId}/solutions/new`}
+                  className="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  Add Solution
+                </Link>
+              </div>
             </nav>
           </motion.div>
           
@@ -277,78 +612,109 @@ export default function ProblemDetail() {
 
                 {/* Solutions */}
                 <div className="space-y-8">
-                  {problem.solutions?.map((solution, index) => (
-                    <div key={index}>
-                      <div className="flex items-center gap-4 mb-3">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                          Approach {index + 1}: {solution.name}
-                        </h2>
-                        <div className="flex gap-2 text-sm">
-                          <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300">
-                            Time: {solution.time_complexity}
-                          </span>
-                          <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300">
-                            Space: {solution.space_complexity}
-                          </span>
+                  {problem.solutions && problem.solutions.length > 0 ? (
+                    problem.solutions.map((solution, index) => (
+                      <div key={index}>
+                        <div className="flex items-center justify-between gap-4 mb-3">
+                          <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                              Approach {index + 1}: {solution.name}
+                            </h2>
+                            <div className="flex gap-2 text-sm">
+                              <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300">
+                                Time: {solution.time_complexity}
+                              </span>
+                              <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300">
+                                Space: {solution.space_complexity}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                // Initialize solution form data with current values
+                                setSolutionFormData({
+                                  name: solution.name,
+                                  description: solution.description,
+                                  code: solution.code,
+                                  time_complexity: solution.time_complexity,
+                                  space_complexity: solution.space_complexity
+                                });
+                                setSelectedSolutionIndex(index);
+                                setIsEditSolutionModalOpen(true);
+                              }}
+                              className="p-2 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800/50 transition-colors"
+                              title="Edit solution"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedSolutionIndex(index);
+                                setIsDeleteSolutionModalOpen(true);
+                              }}
+                              className="p-2 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-800/50 transition-colors"
+                              title="Delete solution"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <p className="text-slate-700 dark:text-slate-300 mb-4">
+                          {solution.description}
+                        </p>
+
+                        <div className="relative">
+                          <pre className="language-python bg-slate-50 dark:bg-slate-900 p-4 rounded-lg overflow-x-auto border border-teal-200 dark:border-slate-700">
+                            <code className="text-slate-900 dark:text-slate-200 font-mono">
+                              {solution.code}
+                            </code>
+                          </pre>
+                          <button 
+                            onClick={() => handleCopyCode(solution.code, index)}
+                            className="absolute top-2 right-2 p-2 bg-white dark:bg-slate-800 rounded-md text-slate-500 hover:text-teal-600 dark:hover:text-teal-400 focus:outline-none border border-teal-200 dark:border-slate-700 transition-colors"
+                            title={copiedIndex === index ? "Copied!" : "Copy code"}
+                          >
+                            {copiedIndex === index ? (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                              </svg>
+                            )}
+                          </button>
                         </div>
                       </div>
-                      
-                      <p className="text-slate-700 dark:text-slate-300 mb-4">
-                        {solution.description}
+                    ))
+                  ) : (
+                    <div className="text-center py-10">
+                      <div className="mb-4 text-slate-400">
+                        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">No Solutions Yet</h3>
+                      <p className="text-slate-600 dark:text-slate-400 mb-6">
+                        Be the first to add a solution for this problem!
                       </p>
-
-                      <div className="relative">
-                        <pre className="language-python bg-slate-50 dark:bg-slate-900 p-4 rounded-lg overflow-x-auto border border-teal-200 dark:border-slate-700">
-                          <code className="text-slate-900 dark:text-slate-200 font-mono">
-                            {solution.code}
-                          </code>
-                        </pre>
-                        <button 
-                          onClick={() => handleCopyCode(solution.code, index)}
-                          className="absolute top-2 right-2 p-2 bg-white dark:bg-slate-800 rounded-md text-slate-500 hover:text-teal-600 dark:hover:text-teal-400 focus:outline-none border border-teal-200 dark:border-slate-700 transition-colors"
-                          title={copiedIndex === index ? "Copied!" : "Copy code"}
-                        >
-                          {copiedIndex === index ? (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                            </svg>
-                          )}
-                        </button>
-                      </div>
+                      <Link
+                        href={`/problems/${problemId}/solutions/new`}
+                        className="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Solution
+                      </Link>
                     </div>
-                  ))}
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Examples</h2>
-                  {problem.examples?.map((example, index) => (
-                    <div key={index} className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg mb-4 border border-teal-200 dark:border-slate-700">
-                      <h3 className="font-semibold mb-2 text-slate-900 dark:text-white">Example {index + 1}:</h3>
-                      {example.input && (
-                        <div className="mb-2">
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300">Input: </span>
-                          <code className="font-mono text-sm bg-white dark:bg-slate-800 px-2 py-1 rounded border border-teal-200 dark:border-slate-700 text-slate-900 dark:text-slate-200">
-                            {example.input}
-                          </code>
-                        </div>
-                      )}
-                      {example.output && (
-                        <div>
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300">Output: </span>
-                          <code className="font-mono text-sm bg-white dark:bg-slate-800 px-2 py-1 rounded border border-teal-200 dark:border-slate-700 text-slate-900 dark:text-slate-200">
-                            {example.output}
-                          </code>
-                        </div>
-                      )}
-                      {example.explanation && (
-                        <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">{example.explanation}</p>
-                      )}
-                    </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
@@ -369,6 +735,438 @@ export default function ProblemDetail() {
         </motion.div>
       </main>
       <Footer />
+
+      {/* Edit Problem Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 p-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Problem</h2>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-6">
+              {formError && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+                  {formError}
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label htmlFor="title" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleFormChange}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="slug_id" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                    Slug ID <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="slug_id"
+                    name="slug_id"
+                    value={formData.slug_id}
+                    onChange={handleFormChange}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <label htmlFor="difficulty" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                  Difficulty <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="difficulty"
+                  name="difficulty"
+                  value={formData.difficulty}
+                  onChange={handleFormChange}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                  required
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
+              
+              <div className="mb-6">
+                <label className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                  Categories <span className="text-red-500">*</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {formData.categories?.map((category, index) => (
+                    <div 
+                      key={index} 
+                      className="bg-teal-100 text-teal-900 dark:bg-teal-900/30 dark:text-teal-300 px-3 py-1 rounded-full flex items-center"
+                    >
+                      <span className="mr-1">{category}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newCategories = [...(formData.categories || [])];
+                          newCategories.splice(index, 1);
+                          handleCategoryChange(newCategories);
+                        }}
+                        className="text-teal-700 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-200 focus:outline-none"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  <input
+                    type="text"
+                    placeholder="Add category..."
+                    className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const input = e.currentTarget;
+                        const value = input.value.trim();
+                        if (value && !formData.categories?.includes(value)) {
+                          handleCategoryChange([...(formData.categories || []), value]);
+                          input.value = '';
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <label htmlFor="description" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleFormChange}
+                  rows={6}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                  required
+                ></textarea>
+              </div>
+              
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="font-medium text-slate-700 dark:text-slate-300">Constraints</label>
+                  <button
+                    type="button"
+                    onClick={addConstraint}
+                    className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 focus:outline-none"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                  </button>
+                </div>
+                {formData.constraints?.map((constraint, index) => (
+                  <div key={index} className="flex items-center mb-2">
+                    <input
+                      type="text"
+                      value={constraint}
+                      onChange={(e) => handleConstraintChange(index, e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeConstraint(index)}
+                      className="ml-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="font-medium text-slate-700 dark:text-slate-300">Examples</label>
+                  <button
+                    type="button"
+                    onClick={addExample}
+                    className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 focus:outline-none"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                  </button>
+                </div>
+                {formData.examples?.map((example, index) => (
+                  <div key={index} className="mb-4 p-4 border border-slate-200 dark:border-slate-700 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium text-slate-900 dark:text-white">Example {index + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => removeExample(index)}
+                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="mb-2">
+                      <label className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">Input</label>
+                      <input
+                        type="text"
+                        value={example.input || ""}
+                        onChange={(e) => handleExampleChange(index, 'input', e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                      />
+                    </div>
+                    <div className="mb-2">
+                      <label className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">Output</label>
+                      <input
+                        type="text"
+                        value={example.output || ""}
+                        onChange={(e) => handleExampleChange(index, 'output', e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">Explanation</label>
+                      <input
+                        type="text"
+                        value={example.explanation || ""}
+                        onChange={(e) => handleExampleChange(index, 'explanation', e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-6 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Updating...
+                    </span>
+                  ) : (
+                    'Update Problem'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Solution Modal */}
+      {isEditSolutionModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 p-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Solution</h2>
+              <button
+                onClick={() => setIsEditSolutionModalOpen(false)}
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpdateSolution} className="p-6">
+              {formError && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+                  {formError}
+                </div>
+              )}
+              
+              <div className="mb-6">
+                <label htmlFor="solution-name" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                  Solution Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="solution-name"
+                  name="name"
+                  value={solutionFormData.name}
+                  onChange={handleSolutionFormChange}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                  required
+                />
+              </div>
+              
+              <div className="mb-6">
+                <label htmlFor="solution-description" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="solution-description"
+                  name="description"
+                  value={solutionFormData.description}
+                  onChange={handleSolutionFormChange}
+                  rows={4}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                  required
+                ></textarea>
+              </div>
+              
+              <div className="mb-6">
+                <label htmlFor="solution-code" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                  Code <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="solution-code"
+                  name="code"
+                  value={solutionFormData.code}
+                  onChange={handleSolutionFormChange}
+                  rows={10}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none font-mono"
+                  required
+                ></textarea>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label htmlFor="time_complexity" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                    Time Complexity <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="time_complexity"
+                    name="time_complexity"
+                    value={solutionFormData.time_complexity}
+                    onChange={handleSolutionFormChange}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                    required
+                    placeholder="e.g., O(n), O(log n)"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="space_complexity" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
+                    Space Complexity <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="space_complexity"
+                    name="space_complexity"
+                    value={solutionFormData.space_complexity}
+                    onChange={handleSolutionFormChange}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                    required
+                    placeholder="e.g., O(n), O(1)"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditSolutionModalOpen(false)}
+                  className="px-6 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Updating...
+                    </span>
+                  ) : (
+                    'Update Solution'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Solution Confirmation Modal */}
+      {isDeleteSolutionModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-center mb-4 text-red-600 dark:text-red-400">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white text-center mb-4">Delete Solution</h2>
+              <p className="text-slate-700 dark:text-slate-300 text-center mb-6">
+                Are you sure you want to delete this solution? This action cannot be undone.
+              </p>
+              <div className="flex justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteSolutionModalOpen(false)}
+                  className="px-6 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteSolution}
+                  disabled={isDeletingSolution}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {isDeletingSolution ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Deleting...
+                    </span>
+                  ) : (
+                    'Delete Solution'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
