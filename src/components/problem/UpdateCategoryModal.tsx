@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { categoriesService } from "@/services/api/categories";
@@ -47,38 +47,55 @@ const toastStyles = {
   }
 };
 
-interface CreateCategoryModalProps {
+interface UpdateCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  categories: string[];
 }
 
-export default function CreateCategoryModal({
+export default function UpdateCategoryModal({
   isOpen,
   onClose,
   onSuccess,
-}: CreateCategoryModalProps) {
-  const [categoryName, setCategoryName] = useState("");
+  categories,
+}: UpdateCategoryModalProps) {
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedCategory(categories.length > 0 ? categories[0] : "");
+      setNewCategoryName("");
+    }
+  }, [isOpen, categories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!categoryName.trim()) {
-      toast.error("Category name cannot be empty", toastStyles.error);
+    
+    if (!selectedCategory) {
+      toast.error("Please select a category to update", toastStyles.error);
+      return;
+    }
+    
+    if (!newCategoryName.trim()) {
+      toast.error("New category name cannot be empty", toastStyles.error);
       return;
     }
 
     setLoading(true);
-    const toastId = toast.loading("Creating category...", toastStyles.loading);
-
+    const toastId = toast.loading("Updating category...", toastStyles.loading);
+    
     try {
-      await categoriesService.createCategory(categoryName.trim());
-      toast.success("Category created successfully!", { id: toastId, ...toastStyles.success });
+      await categoriesService.updateCategory(selectedCategory, newCategoryName.trim());
+      toast.success("Category updated successfully!", { id: toastId, ...toastStyles.success });
       onSuccess();
       onClose();
-      setCategoryName("");
+      setNewCategoryName("");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create category';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update category';
       toast.error(errorMessage, { id: toastId, ...toastStyles.error });
     } finally {
       setLoading(false);
@@ -103,23 +120,42 @@ export default function CreateCategoryModal({
             className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md shadow-xl"
           >
             <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-slate-100">
-              Create New Category
+              Update Category
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label
-                  htmlFor="categoryName"
+                  htmlFor="selectedCategory"
                   className="block text-sm font-medium text-slate-900 dark:text-slate-200 mb-1"
                 >
-                  Category Name
+                  Select Category
+                </label>
+                <select
+                  id="selectedCategory"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-2 border border-teal-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200"
+                  required
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="newCategoryName"
+                  className="block text-sm font-medium text-slate-900 dark:text-slate-200 mb-1"
+                >
+                  New Category Name
                 </label>
                 <input
                   type="text"
-                  id="categoryName"
-                  value={categoryName}
-                  onChange={(e) => setCategoryName(e.target.value)}
+                  id="newCategoryName"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
                   className="w-full px-4 py-2 border border-teal-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200"
-                  placeholder="Enter category name"
+                  placeholder="Enter new category name"
                   required
                 />
               </div>
@@ -140,7 +176,7 @@ export default function CreateCategoryModal({
                   disabled={loading}
                   className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 dark:hover:bg-teal-500 disabled:bg-teal-400 dark:disabled:bg-teal-700"
                 >
-                  {loading ? "Creating..." : "Create"}
+                  {loading ? "Updating..." : "Update"}
                 </motion.button>
               </div>
             </form>

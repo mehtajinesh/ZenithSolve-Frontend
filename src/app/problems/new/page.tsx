@@ -11,6 +11,50 @@ import { problemsService } from "@/services/api/problems";
 // Constants for form options
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 
+// Custom toast styles
+const toastStyles = {
+  success: {
+    style: {
+      background: '#10B981',
+      color: 'white',
+      padding: '16px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      borderRadius: '8px',
+      fontWeight: '500',
+    },
+    iconTheme: {
+      primary: 'white',
+      secondary: '#10B981',
+    },
+    duration: 3000,
+  },
+  error: {
+    style: {
+      background: '#EF4444',
+      color: 'white',
+      padding: '16px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      borderRadius: '8px',
+      fontWeight: '500',
+    },
+    iconTheme: {
+      primary: 'white',
+      secondary: '#EF4444',
+    },
+    duration: 4000,
+  },
+  loading: {
+    style: {
+      background: '#3B82F6',
+      color: 'white',
+      padding: '16px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      borderRadius: '8px',
+      fontWeight: '500',
+    },
+  }
+};
+
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -76,7 +120,7 @@ export default function NewProblemPage() {
     e.preventDefault();
     setLoading(true);
 
-    const toastId = toast.loading("Creating problem...");
+    const toastId = toast.loading("Creating problem...", toastStyles.loading);
 
     try {
       // Form validation
@@ -92,7 +136,7 @@ export default function NewProblemPage() {
       await problemsService.createProblem(formData);
       
       // Show success message
-      toast.success("Problem created successfully!", { id: toastId });
+      toast.success("Problem created successfully!", { id: toastId, ...toastStyles.success });
       
       // Redirect after a short delay to ensure the user sees the success message
       setTimeout(() => {
@@ -101,7 +145,7 @@ export default function NewProblemPage() {
     } catch (err) {
       // The error message is already formatted by our axios interceptor
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      toast.error(errorMessage, { id: toastId });
+      toast.error(errorMessage, { id: toastId, ...toastStyles.error });
       setLoading(false);
     }
   };

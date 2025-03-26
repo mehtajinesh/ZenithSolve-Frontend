@@ -8,6 +8,8 @@ import ProblemCard from "./ProblemCard";
 import { problemsService } from "@/services/api/problems";
 import { categoriesService } from "@/services/api/categories";
 import CreateCategoryModal from "./CreateCategoryModal";
+import UpdateCategoryModal from "./UpdateCategoryModal";
+import DeleteCategoryModal from "./DeleteCategoryModal";
 
 type Difficulty = "Easy" | "Medium" | "Hard" | "All";
 const difficulties: Difficulty[] = ["All", "Easy", "Medium", "Hard"];
@@ -33,6 +35,9 @@ export default function ProblemList() {
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] = useState(false);
+  const [isUpdateCategoryModalOpen, setIsUpdateCategoryModalOpen] = useState(false);
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Fetch problems and categories on component mount
   useEffect(() => {
@@ -75,7 +80,7 @@ export default function ProblemList() {
     setFilteredProblems(results);
   }, [searchQuery, difficulty, category, problems]);
 
-  const handleCategoryCreated = () => {
+  const handleCategorySuccess = () => {
     // Refresh categories and problems
     Promise.all([
       problemsService.getProblems(),
@@ -85,6 +90,8 @@ export default function ProblemList() {
       setFilteredProblems(problemsData);
       setCategories(["All", ...categoriesData]);
     });
+    // Close dropdown after action
+    setDropdownOpen(false);
   };
 
   if (loading) {
@@ -139,27 +146,102 @@ export default function ProblemList() {
               Create Problem
             </Link>
           </motion.div>
-          <motion.button
+          <motion.div
+            className="relative"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setIsCreateCategoryModalOpen(true)}
-            className="inline-flex items-center px-4 py-2 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
           >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="inline-flex items-center px-4 py-2 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            New Category
-          </motion.button>
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 7h10M7 12h10M7 17h10"
+                />
+              </svg>
+              Manage Categories
+            </button>
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-700 rounded-lg shadow-lg z-10">
+                <button
+                  onClick={() => setIsCreateCategoryModalOpen(true)}
+                  className="block w-full text-left px-4 py-2 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                >
+<div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  Create Category
+</div>
+                </button>
+                <button
+                  onClick={() => setIsUpdateCategoryModalOpen(true)}
+                  className="block w-full text-left px-4 py-2 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                >
+<div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  Update Category
+</div>
+                </button>
+                <button
+                  onClick={() => setIsDeleteCategoryModalOpen(true)}
+                  className="block w-full text-left px-4 py-2 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                >
+<div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  Delete Category
+</div>
+                </button>
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
 
@@ -270,7 +352,21 @@ export default function ProblemList() {
       <CreateCategoryModal 
         isOpen={isCreateCategoryModalOpen}
         onClose={() => setIsCreateCategoryModalOpen(false)}
-        onSuccess={handleCategoryCreated}
+        onSuccess={handleCategorySuccess}
+      />
+
+      <UpdateCategoryModal
+        isOpen={isUpdateCategoryModalOpen}
+        onClose={() => setIsUpdateCategoryModalOpen(false)}
+        onSuccess={handleCategorySuccess}
+        categories={categories.filter(cat => cat !== "All")}
+      />
+
+      <DeleteCategoryModal
+        isOpen={isDeleteCategoryModalOpen}
+        onClose={() => setIsDeleteCategoryModalOpen(false)}
+        onSuccess={handleCategorySuccess}
+        categories={categories.filter(cat => cat !== "All")}
       />
     </div>
   );
