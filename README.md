@@ -2,6 +2,10 @@
 
 A modern web platform for practicing and visualizing problem-solving techniques and algorithms.
 
+[![Latest Release](https://img.shields.io/github/v/release/mehtajinesh/ZenithSolve-Frontend)](https://github.com/mehtajinesh/ZenithSolve-Frontend/releases/latest)
+
+[![Deploy Frontend to DigitalOcean](https://github.com/mehtajinesh/ZenithSolve-Frontend/actions/workflows/pipeline.yaml/badge.svg)](https://github.com/mehtajinesh/ZenithSolve-Frontend/actions/workflows/pipeline.yaml)
+
 ## Overview
 
 ZenithSolve is a Next.js-based application that provides an interactive environment for:
@@ -69,6 +73,6 @@ npm run dev
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
+## License Information
 
-[Add your license here]
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
