@@ -644,31 +644,17 @@ export default function ProblemDetail() {
                           </div>
                         </div>
                         
-                        <p className="text-slate-700 dark:text-slate-300 mb-4">
-                          {solution.description}
-                        </p>
+                        <div className="mb-4">
+                          <div data-color-mode="dark">
+                            <MarkdownPreview source={solution.description} />
+                          </div>
+                        </div>
 
-                        <div className="relative">
-                          <pre className="language-python bg-slate-50 dark:bg-slate-900 p-4 rounded-lg overflow-x-auto border border-teal-200 dark:border-slate-700">
-                            <code className="text-slate-900 dark:text-slate-200 font-mono">
-                              {solution.code}
-                            </code>
-                          </pre>
-                          <button 
-                            onClick={() => handleCopyCode(solution.code, index)}
-                            className="absolute top-2 right-2 p-2 bg-white dark:bg-slate-800 rounded-md text-slate-500 hover:text-teal-600 dark:hover:text-teal-400 focus:outline-none border border-teal-200 dark:border-slate-700 transition-colors"
-                            title={copiedIndex === index ? "Copied!" : "Copy code"}
-                          >
-                            {copiedIndex === index ? (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                              </svg>
-                            ) : (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                              </svg>
-                            )}
-                          </button>
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">Solution Code</h3>
+                            <div data-color-mode="dark">
+                              <MarkdownPreview source={solution.code} />
+                            </div>
                         </div>
                       </div>
                     ))
@@ -975,30 +961,40 @@ export default function ProblemDetail() {
                 <label htmlFor="solution-description" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
                   Description <span className="text-red-500">*</span>
                 </label>
-                <textarea
-                  id="solution-description"
-                  name="description"
-                  value={solutionFormData.description}
-                  onChange={handleSolutionFormChange}
-                  rows={4}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
-                  required
-                ></textarea>
+                <div data-color-mode="dark">
+                  <MDEditor
+                    value={solutionFormData.description}
+                    onChange={(value) => {
+                      setSolutionFormData(prev => ({
+                        ...prev,
+                        description: value || ""
+                      }));
+                    }}
+                    preview="edit"
+                    height={200}
+                    className="w-full"
+                  />
+                </div>
               </div>
               
               <div className="mb-6">
                 <label htmlFor="solution-code" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
                   Code <span className="text-red-500">*</span>
                 </label>
-                <textarea
-                  id="solution-code"
-                  name="code"
-                  value={solutionFormData.code}
-                  onChange={handleSolutionFormChange}
-                  rows={10}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none font-mono"
-                  required
-                ></textarea>
+                <div data-color-mode="dark">
+                  <MDEditor
+                    value={solutionFormData.code}
+                    onChange={(value) => {
+                      setSolutionFormData(prev => ({
+                        ...prev,
+                        code: value || ""
+                      }));
+                    }}
+                    preview="edit"
+                    height={300}
+                    className="w-full"
+                  />
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

@@ -4,6 +4,19 @@ import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { problemsService } from '@/services/api/problems';
+import dynamic from 'next/dynamic';
+
+// Import markdown editor with no SSR
+const MDEditor = dynamic(
+  () => import("@uiw/react-md-editor").then((mod) => mod.default),
+  { ssr: false }
+);
+
+// Import markdown preview component
+const MarkdownPreview = dynamic(
+  () => import("@uiw/react-md-editor").then((mod) => mod.default.Markdown),
+  { ssr: false }
+);
 
 export default function NewSolutionPage() {
   const router = useRouter();
@@ -110,32 +123,40 @@ export default function NewSolutionPage() {
               <label htmlFor="description" className="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-200">
                 Description
               </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-                rows={4}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:border-teal-500 dark:focus:border-teal-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                placeholder="Explain your solution approach..."
-              />
+              <div data-color-mode="dark">
+                <MDEditor
+                  value={formData.description}
+                  onChange={(value) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      description: value || ""
+                    }));
+                  }}
+                  preview="edit"
+                  height={200}
+                  className="w-full"
+                />
+              </div>
             </div>
 
             <div>
               <label htmlFor="code" className="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-200">
                 Code
               </label>
-              <textarea
-                id="code"
-                name="code"
-                value={formData.code}
-                onChange={handleChange}
-                required
-                rows={8}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:border-teal-500 dark:focus:border-teal-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                placeholder="Paste your solution code here..."
-              />
+              <div data-color-mode="dark">
+                <MDEditor
+                  value={formData.code}
+                  onChange={(value) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      code: value || ""
+                    }));
+                  }}
+                  preview="edit"
+                  height={300}
+                  className="w-full"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
