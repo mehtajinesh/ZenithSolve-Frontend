@@ -1,0 +1,37 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Remote SSH and execute commands
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DO_SERVER_IP }}
+          username: ${{ secrets.DO_SERVER_USER }}
+          key: ${{ secrets.DO_SERVER_SSH_KEY }}
+          port: ${{ secrets.DO_SERVER_PORT || 22 }}
+          script: |
+            sh scripts/deploy-zenith-frontend.sh
+
+      - name: Notify Slack - Deployment
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          text: |
+            Deployment to DigitalOcean ${{ job.status }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Server: ${{ secrets.DO_SERVER_IP }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_ZS_FE_WEBHOOK_URL }}
