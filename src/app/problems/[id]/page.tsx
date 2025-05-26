@@ -8,6 +8,19 @@ import toast from "react-hot-toast";
 import Footer from "@/components/layout/Footer";
 import { problemsService } from "@/services/api/problems";
 import type { Problem } from "@/types/problem";
+import dynamic from "next/dynamic";
+
+// Import markdown preview component
+const MarkdownPreview = dynamic(
+  () => import("@uiw/react-md-editor").then((mod) => mod.default.Markdown),
+  { ssr: false }
+);
+
+// Import markdown editor with no SSR
+const MDEditor = dynamic(
+  () => import("@uiw/react-md-editor").then((mod) => mod.default),
+  { ssr: false }
+);
 
 // Toast notification styles for consistent UX
 const toastStyles = {
@@ -75,7 +88,7 @@ export default function ProblemDetail() {
     difficulty: "Easy",
     categories: [],
     description: "",
-    constraints: [],
+    constraints: "",
     examples: []
   });
   
@@ -119,12 +132,18 @@ export default function ProblemDetail() {
     }
   };
 
-  // Function to update the form data
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleMarkdownChange = (value?: string) => {
+    setFormData(prev => ({
+      ...prev,
+      description: value || "",
     }));
   };
 
@@ -136,41 +155,10 @@ export default function ProblemDetail() {
     }));
   };
 
-  // Function to handle constraint changes
-  const handleConstraintChange = (index: number, value: string) => {
-    const newConstraints = [...(formData.constraints || [])];
-    newConstraints[index] = value;
-    setFormData(prev => ({
-      ...prev,
-      constraints: newConstraints
-    }));
-  };
-
-  // Function to add a constraint
-  const addConstraint = () => {
-    setFormData(prev => ({
-      ...prev,
-      constraints: [...(prev.constraints || []), ""]
-    }));
-  };
-
-  // Function to remove a constraint
-  const removeConstraint = (index: number) => {
-    const newConstraints = [...(formData.constraints || [])];
-    newConstraints.splice(index, 1);
-    setFormData(prev => ({
-      ...prev,
-      constraints: newConstraints
-    }));
-  };
-
   // Function to handle example changes
-  const handleExampleChange = (index: number, field: 'input' | 'output' | 'explanation', value: string) => {
+  const handleExampleChange = (index: number, value: string) => {
     const newExamples = [...(formData.examples || [])];
-    newExamples[index] = {
-      ...newExamples[index],
-      [field]: value
-    };
+    newExamples[index] = value;
     setFormData(prev => ({
       ...prev,
       examples: newExamples
@@ -181,7 +169,7 @@ export default function ProblemDetail() {
   const addExample = () => {
     setFormData(prev => ({
       ...prev,
-      examples: [...(prev.examples || []), { input: "", output: "", explanation: "" }]
+      examples: [...(prev.examples || []), ""]
     }));
   };
 
@@ -475,7 +463,7 @@ export default function ProblemDetail() {
                       difficulty: problem.difficulty,
                       categories: [...problem.categories],
                       description: problem.description,
-                      constraints: [...problem.constraints],
+                      constraints: problem.constraints,
                       examples: JSON.parse(JSON.stringify(problem.examples))
                     });
                     setIsEditModalOpen(true);
@@ -562,34 +550,25 @@ export default function ProblemDetail() {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Problem Statement</h2>
-                  <p className="text-slate-700 dark:text-slate-300">{problem.description}</p>
+                  <div className="flex justify-between items-center mb-2">
+                    <label htmlFor="description" className="block font-medium text-slate-700 dark:text-slate-300">
+                      Description
+                    </label>
+                  </div>
+                  <div data-color-mode="dark">
+                    <MarkdownPreview source={problem.description} />
+                  </div>
                 </div>
                 
-                {/* Example input/output would go here */}
+                {/* Examples */}
                 <div>
                   <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Examples</h2>
                   {problem.examples?.map((example, index) => (
                     <div key={index} className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg mb-4 border border-teal-200 dark:border-slate-700">
                       <h3 className="font-semibold mb-2 text-slate-900 dark:text-white">Example {index + 1}:</h3>
-                      {example.input && (
-                        <div className="mb-2">
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300">Input: </span>
-                          <code className="font-mono text-sm bg-white dark:bg-slate-800 px-2 py-1 rounded border border-teal-200 dark:border-slate-700 text-slate-900 dark:text-slate-200">
-                            {example.input}
-                          </code>
-                        </div>
-                      )}
-                      {example.output && (
-                        <div>
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300">Output: </span>
-                          <code className="font-mono text-sm bg-white dark:bg-slate-800 px-2 py-1 rounded border border-teal-200 dark:border-slate-700 text-slate-900 dark:text-slate-200">
-                            {example.output}
-                          </code>
-                        </div>
-                      )}
-                      {example.explanation && (
-                        <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm">{example.explanation}</p>
-                      )}
+                      <div data-color-mode="dark">
+                        <MarkdownPreview source={example} />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -597,11 +576,11 @@ export default function ProblemDetail() {
                 {/* Constraints */}
                 <div>
                   <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Constraints</h2>
-                  <ul className="list-disc pl-5 space-y-2 text-slate-700 dark:text-slate-300">
-                  {problem.constraints?.map((constraint, index) => (
-                      <li key={index}>{constraint}</li>
-                    ))}
-                  </ul>
+                  <div className="w-full p-4 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800">
+                    <div data-color-mode="dark">
+                      <MarkdownPreview source={problem.constraints} />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -738,21 +717,10 @@ export default function ProblemDetail() {
 
       {/* Edit Problem Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 p-6">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Problem</h2>
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white">Edit Problem</h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
               {formError && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
                   {formError}
@@ -854,55 +822,45 @@ export default function ProblemDetail() {
               </div>
               
               <div className="mb-6">
-                <label htmlFor="description" className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleFormChange}
-                  rows={6}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
-                  required
-                ></textarea>
-              </div>
-              
-              <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="font-medium text-slate-700 dark:text-slate-300">Constraints</label>
-                  <button
-                    type="button"
-                    onClick={addConstraint}
-                    className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 focus:outline-none"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                  </button>
+                  <label htmlFor="description" className="block font-medium text-slate-700 dark:text-slate-300">
+                    Description <span className="text-red-500">*</span>
+                  </label>
                 </div>
-                {formData.constraints?.map((constraint, index) => (
-                  <div key={index} className="flex items-center mb-2">
-                    <input
-                      type="text"
-                      value={constraint}
-                      onChange={(e) => handleConstraintChange(index, e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeConstraint(index)}
-                      className="ml-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                <div data-color-mode="dark">
+                  <MDEditor
+                    value={formData.description}
+                    onChange={handleMarkdownChange}
+                    preview="edit"
+                    height={300}
+                    className="w-full"
+                  />
+                </div>
               </div>
               
-              <div className="mb-6">
+              {/* Constraints */}
+              <div>
+                <label htmlFor="constraints" className="block text-sm font-medium text-slate-900 dark:text-slate-200 mb-2">
+                  Constraints
+                </label>
+                <div data-color-mode="dark">
+                  <MDEditor
+                    value={formData.constraints || ""}
+                    onChange={(value) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        constraints: value || ""
+                      }));
+                    }}
+                    preview="edit"
+                    height={200}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+              
+              {/* Examples */}
+              <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="font-medium text-slate-700 dark:text-slate-300">Examples</label>
                   <button
@@ -915,45 +873,29 @@ export default function ProblemDetail() {
                     </svg>
                   </button>
                 </div>
-                {formData.examples?.map((example, index) => (
+                {(formData.examples || []).map((example, index) => (
                   <div key={index} className="mb-4 p-4 border border-slate-200 dark:border-slate-700 rounded-lg">
                     <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-medium text-slate-900 dark:text-white">Example {index + 1}</h4>
-                      <button
-                        type="button"
-                        onClick={() => removeExample(index)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </button>
+                      <h3 className="font-medium text-slate-700 dark:text-slate-300">Example {index + 1}</h3>
+                      {(formData.examples || []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeExample(index)}
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
+                      )}
                     </div>
-                    <div className="mb-2">
-                      <label className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">Input</label>
-                      <input
-                        type="text"
-                        value={example.input || ""}
-                        onChange={(e) => handleExampleChange(index, 'input', e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
-                      />
-                    </div>
-                    <div className="mb-2">
-                      <label className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">Output</label>
-                      <input
-                        type="text"
-                        value={example.output || ""}
-                        onChange={(e) => handleExampleChange(index, 'output', e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">Explanation</label>
-                      <input
-                        type="text"
-                        value={example.explanation || ""}
-                        onChange={(e) => handleExampleChange(index, 'explanation', e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                    <div data-color-mode="dark">
+                      <MDEditor
+                        value={example}
+                        onChange={(value) => handleExampleChange(index, value || "")}
+                        preview="edit"
+                        height={200}
+                        className="w-full"
                       />
                     </div>
                   </div>

@@ -4,6 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { Problem } from "@/types/problem";
+import dynamic from "next/dynamic";
+
+// Import markdown preview component with no SSR
+const MarkdownPreview = dynamic(
+  () => import("@uiw/react-md-editor").then((mod) => mod.default.Markdown),
+  { ssr: false }
+);
 
 type ProblemCardProps = {
   problem: Problem;
@@ -91,9 +98,9 @@ export default function ProblemCard({ problem }: ProblemCardProps) {
       {/* Card content */}
       <div className="p-6 bg-slate-50 dark:bg-slate-900">
         {/* Description */}
-        <p className="h-20 text-sm mb-4 text-slate-700 dark:text-slate-300 overflow-hidden">
-          {problem.description}
-        </p>
+        <div className="h-30 mb-4 text-sm text-slate-700 dark:text-slate-300 overflow-y-auto" data-color-mode="dark">
+          <MarkdownPreview source={problem.description} />
+        </div>
         
         {/* Best Complexity badges */}
         {(problem.best_time_complexity || problem.best_space_complexity) && (

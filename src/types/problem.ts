@@ -4,7 +4,7 @@ export interface Problem {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   categories: string[];
   description: string;
-  constraints: string[];
+  constraints: string;
   solution_approach?: string;
   solutions?: Array<{
     name: string;
@@ -18,11 +18,7 @@ export interface Problem {
     description: string;
     impact: string;
   }>;
-  examples: Array<{
-    input: string;
-    output: string;
-    explanation?: string;
-  }>;
+  examples: string[];
   best_time_complexity?: string;
   best_space_complexity?: string;
 }
