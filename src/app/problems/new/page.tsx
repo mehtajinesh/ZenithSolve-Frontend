@@ -96,6 +96,7 @@ export default function NewProblemPage() {
     categories: [],
     description: "",
     constraints: "",
+    clarifying_questions: [""],
     examples: [""],
   });
 
@@ -331,6 +332,69 @@ export default function NewProblemPage() {
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Use markdown to format your constraints. Each constraint should be on a new line.
+            </p>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-lg font-medium text-slate-900 dark:text-slate-200">
+                Clarifying Questions
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    clarifying_questions: [...prev.clarifying_questions, ""]
+                  }));
+                }}
+                className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 focus:outline-none"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-4">
+              {formData.clarifying_questions.map((question, index) => (
+                <div key={index} className="relative group">
+                  <div data-color-mode="dark">
+                    <MDEditor
+                      value={question}
+                      onChange={(value) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          clarifying_questions: prev.clarifying_questions.map((q, i) => 
+                            i === index ? (value || "") : q
+                          )
+                        }));
+                      }}
+                      preview="edit"
+                      height={100}
+                      className="w-full"
+                    />
+                  </div>
+                  {formData.clarifying_questions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          clarifying_questions: prev.clarifying_questions.filter((_, i) => i !== index)
+                        }));
+                      }}
+                      className="absolute top-2 right-2 text-red-500 hover:text-red-700 focus:outline-none"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Add clarifying questions that help users better understand the problem requirements.
             </p>
           </motion.div>
 

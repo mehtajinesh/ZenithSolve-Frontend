@@ -5,6 +5,7 @@ export interface Problem {
   categories: string[];
   description: string;
   constraints: string;
+  clarifying_questions: string[];
   solution_approach?: string;
   solutions?: Array<{
     name: string;

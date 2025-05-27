@@ -9,6 +9,8 @@ import Footer from "@/components/layout/Footer";
 import { problemsService } from "@/services/api/problems";
 import type { Problem } from "@/types/problem";
 import dynamic from "next/dynamic";
+import ReactMarkdown from "react-markdown";
+import { categoriesService } from "@/services/api/categories";
 
 // Import markdown preview component
 const MarkdownPreview = dynamic(
@@ -92,6 +94,10 @@ export default function ProblemDetail() {
     examples: []
   });
   
+  // Add state for available categories
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState("");
+
   // State for solution management
   const [isEditSolutionModalOpen, setIsEditSolutionModalOpen] = useState(false);
   const [isDeleteSolutionModalOpen, setIsDeleteSolutionModalOpen] = useState(false);
@@ -121,6 +127,21 @@ export default function ProblemDetail() {
 
     fetchProblem();
   }, [problemId]);
+
+  // Fetch available categories when modal opens
+  useEffect(() => {
+    if (isEditModalOpen) {
+      const fetchCategories = async () => {
+        try {
+          const categories = await categoriesService.getCategories();
+          setAvailableCategories(categories);
+        } catch (err) {
+          console.error('Error fetching categories:', err);
+        }
+      };
+      fetchCategories();
+    }
+  }, [isEditModalOpen]);
 
   const handleCopyCode = async (code: string, index: number) => {
     try {
@@ -181,6 +202,20 @@ export default function ProblemDetail() {
       ...prev,
       examples: newExamples
     }));
+  };
+
+  // Function to add a new category
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return;
+
+    try {
+      await categoriesService.createCategory(newCategory.trim());
+      setAvailableCategories(prev => [...prev, newCategory.trim()]);
+      handleCategoryChange([...(formData.categories || []), newCategory.trim()]);
+      setNewCategory("");
+    } catch (err) {
+      console.error('Error creating category:', err);
+    }
   };
 
   // Function to handle form submission
@@ -550,11 +585,6 @@ export default function ProblemDetail() {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Problem Statement</h2>
-                  <div className="flex justify-between items-center mb-2">
-                    <label htmlFor="description" className="block font-medium text-slate-700 dark:text-slate-300">
-                      Description
-                    </label>
-                  </div>
                   <div data-color-mode="dark">
                     <MarkdownPreview source={problem.description} />
                   </div>
@@ -582,6 +612,20 @@ export default function ProblemDetail() {
                     </div>
                   </div>
                 </div>
+
+                {/* Clarifying Questions Section */}
+                {problem.clarifying_questions && problem.clarifying_questions.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Clarifying Questions</h3>
+                    <div className="space-y-4">
+                      {problem.clarifying_questions.map((question, index) => (
+                        <div key={index} className="prose dark:prose-invert max-w-none">
+                          <ReactMarkdown>{question}</ReactMarkdown>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             
@@ -766,44 +810,78 @@ export default function ProblemDetail() {
                 <label className="block mb-2 font-medium text-slate-700 dark:text-slate-300">
                   Categories <span className="text-red-500">*</span>
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {formData.categories?.map((category, index) => (
-                    <div 
-                      key={index} 
-                      className="bg-teal-100 text-teal-900 dark:bg-teal-900/30 dark:text-teal-300 px-3 py-1 rounded-full flex items-center"
-                    >
-                      <span className="mr-1">{category}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newCategories = [...(formData.categories || [])];
-                          newCategories.splice(index, 1);
-                          handleCategoryChange(newCategories);
-                        }}
-                        className="text-teal-700 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-200 focus:outline-none"
+                <div className="space-y-4">
+                  {/* Selected Categories */}
+                  <div className="flex flex-wrap gap-2">
+                    {formData.categories?.map((category, index) => (
+                      <div 
+                        key={index} 
+                        className="bg-teal-100 text-teal-900 dark:bg-teal-900/30 dark:text-teal-300 px-3 py-1 rounded-full flex items-center"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                  <input
-                    type="text"
-                    placeholder="Add category..."
-                    className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const input = e.currentTarget;
-                        const value = input.value.trim();
-                        if (value && !formData.categories?.includes(value)) {
-                          handleCategoryChange([...(formData.categories || []), value]);
-                          input.value = '';
+                        <span className="mr-1">{category}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newCategories = [...(formData.categories || [])];
+                            newCategories.splice(index, 1);
+                            handleCategoryChange(newCategories);
+                          }}
+                          className="text-teal-700 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-200 focus:outline-none"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Available Categories Dropdown */}
+                  <div className="relative">
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const selectedCategory = e.target.value;
+                        if (selectedCategory && !formData.categories?.includes(selectedCategory)) {
+                          handleCategoryChange([...(formData.categories || []), selectedCategory]);
                         }
-                      }
-                    }}
-                  />
+                      }}
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                    >
+                      <option value="">Select a category</option>
+                      {availableCategories
+                        .filter(cat => !formData.categories?.includes(cat))
+                        .map(category => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {/* Add New Category */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      placeholder="Add new category..."
+                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-slate-900 dark:text-white focus:border-teal-500 dark:focus:border-teal-600 focus:outline-none"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCategory();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCategory}
+                      className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
               </div>
               
@@ -843,6 +921,70 @@ export default function ProblemDetail() {
                     className="w-full"
                   />
                 </div>
+              </div>
+
+              {/* Clarifying Questions */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-slate-900 dark:text-slate-200">
+                    Clarifying Questions
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        clarifying_questions: [...(prev.clarifying_questions || []), ""]
+                      }));
+                    }}
+                    className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 focus:outline-none"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {(formData.clarifying_questions || [""]).map((question, index) => (
+                    <div key={index} className="relative group">
+                      <div data-color-mode="dark">
+                        <MDEditor
+                          value={question}
+                          onChange={(value) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              clarifying_questions: (prev.clarifying_questions || []).map((q, i) => 
+                                i === index ? (value || "") : q
+                              )
+                            }));
+                          }}
+                          preview="edit"
+                          height={100}
+                          className="w-full"
+                        />
+                      </div>
+                      {(formData.clarifying_questions?.length || 0) > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              clarifying_questions: (prev.clarifying_questions || []).filter((_, i) => i !== index)
+                            }));
+                          }}
+                          className="absolute top-2 right-2 text-red-500 hover:text-red-700 focus:outline-none"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Add clarifying questions that help users better understand the problem requirements.
+                </p>
               </div>
               
               {/* Examples */}
