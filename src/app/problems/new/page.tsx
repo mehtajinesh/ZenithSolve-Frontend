@@ -358,22 +358,20 @@ export default function NewProblemPage() {
             <div className="space-y-4">
               {formData.clarifying_questions.map((question, index) => (
                 <div key={index} className="relative group">
-                  <div data-color-mode="dark">
-                    <MDEditor
-                      value={question}
-                      onChange={(value) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          clarifying_questions: prev.clarifying_questions.map((q, i) => 
-                            i === index ? (value || "") : q
-                          )
-                        }));
-                      }}
-                      preview="edit"
-                      height={100}
-                      className="w-full"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={question}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        clarifying_questions: prev.clarifying_questions.map((q, i) => 
+                          i === index ? e.target.value : q
+                        )
+                      }));
+                    }}
+                    className="w-full px-4 py-2 border border-teal-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 transition-all duration-200 hover:border-teal-300 dark:hover:border-slate-500"
+                    placeholder="Enter a clarifying question"
+                  />
                   {formData.clarifying_questions.length > 1 && (
                     <button
                       type="button"

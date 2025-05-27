@@ -499,7 +499,8 @@ export default function ProblemDetail() {
                       categories: [...problem.categories],
                       description: problem.description,
                       constraints: problem.constraints,
-                      examples: JSON.parse(JSON.stringify(problem.examples))
+                      examples: JSON.parse(JSON.stringify(problem.examples)),
+                      clarifying_questions: problem.clarifying_questions ? [...problem.clarifying_questions] : [""]
                     });
                     setIsEditModalOpen(true);
                   }}
@@ -617,13 +618,13 @@ export default function ProblemDetail() {
                 {problem.clarifying_questions && problem.clarifying_questions.length > 0 && (
                   <div className="mb-8">
                     <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Clarifying Questions</h3>
-                    <div className="space-y-4">
+                    <ul className="list-disc pl-5 space-y-2">
                       {problem.clarifying_questions.map((question, index) => (
-                        <div key={index} className="prose dark:prose-invert max-w-none">
-                          <ReactMarkdown>{question}</ReactMarkdown>
-                        </div>
+                        <li key={index} className="text-slate-700 dark:text-slate-300">
+                          {question}
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 )}
               </div>
@@ -947,22 +948,20 @@ export default function ProblemDetail() {
                 <div className="space-y-4">
                   {(formData.clarifying_questions || [""]).map((question, index) => (
                     <div key={index} className="relative group">
-                      <div data-color-mode="dark">
-                        <MDEditor
-                          value={question}
-                          onChange={(value) => {
-                            setFormData(prev => ({
-                              ...prev,
-                              clarifying_questions: (prev.clarifying_questions || []).map((q, i) => 
-                                i === index ? (value || "") : q
-                              )
-                            }));
-                          }}
-                          preview="edit"
-                          height={100}
-                          className="w-full"
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={question}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            clarifying_questions: (prev.clarifying_questions || []).map((q, i) => 
+                              i === index ? e.target.value : q
+                            )
+                          }));
+                        }}
+                        className="w-full px-4 py-2 border border-teal-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 transition-all duration-200 hover:border-teal-300 dark:hover:border-slate-500"
+                        placeholder="Enter a clarifying question"
+                      />
                       {(formData.clarifying_questions?.length || 0) > 1 && (
                         <button
                           type="button"
