@@ -41,15 +41,13 @@ export default function ProblemCard({ problem }: ProblemCardProps) {
       opacity: 1, 
       y: 0,
       transition: { 
-        duration: 0.5,
-        ease: "easeOut" 
+        duration: 0.5
       }
     },
     hover: {
       y: -5,
       transition: { 
-        duration: 0.3,
-        ease: "easeOut" 
+        duration: 0.3
       }
     }
   };
